@@ -1,17 +1,34 @@
 
-# go-getting-started
+# Go Thumbnail Service + Tests
 
-A barebones Go app, which can easily be deployed to Heroku.
+# Try first
+from your browser go to heroku app on `https://pure-earth-19327.herokuapp.com/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=1024&height=400`
+![img](assets/lena_hi.png)
 
-This application supports the [Getting Started with Go on Heroku](https://devcenter.heroku.com/articles/getting-started-with-go) article - check it out.
+## Tests
+install the one dependecy in this project with 
+```
+go get -u github.com/nfnt/resize
+```
 
-## Running Locally
+than run 
+```
+go test -v
+```
 
-Make sure you have [Go](http://golang.org/doc/install) and the [Heroku Toolbelt](https://toolbelt.heroku.com/) installed.
+This will run the following tests:
+ - test "good flow" -  Go over all kinds of widths+heights combinations and make sure result is 200
+ - test non jpeg queries
+ - test missing/bad format paramteres in the url
+
+find those on `api_test.go`
+
+
+## Running Heroku Locally
 
 ```sh
-$ go get -u github.com/heroku/go-getting-started
-$ cd $GOPATH/src/github.com/heroku/go-getting-started
+$ go get -u https://github.com/nonnghackpd3mkcwb/cloudinary2
+$ cd $GOPATH/src/github.com/nonnghackpd3mkcwb/cloudinary2
 $ heroku local
 ```
 
@@ -19,21 +36,3 @@ Your app should now be running on [localhost:5000](http://localhost:5000/).
 
 You should also install [govendor](https://github.com/kardianos/govendor) if you are going to add any dependencies to the sample app.
 
-## Deploying to Heroku
-
-```sh
-$ heroku create
-$ git push heroku master
-$ heroku open
-```
-
-or
-
-[![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
-
-
-## Documentation
-
-For more information about using Go on Heroku, see these Dev Center articles:
-
-- [Go on Heroku](https://devcenter.heroku.com/categories/go)
