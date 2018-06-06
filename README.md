@@ -2,8 +2,10 @@
 # Go Thumbnail Service + Tests
 
 # Try first
-from your browser go to heroku app on `https://pure-earth-19327.herokuapp.com/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=1024&height=400`
+from your browser go to heroku app [here](https://pure-earth-19327.herokuapp.com/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=1024&height=400)
+
 ![img](assets/lena_hi.png)
+
 
 ## Tests
 install the one dependecy in this project with 
