@@ -41,10 +41,7 @@ Your app should now be running on [localhost:5000](http://localhost:5000/).
 You should also install [govendor](https://github.com/kardianos/govendor) if you are going to add any dependencies to the sample app.
 
 ## Question:
-### Your thumbnail service is getting traction and CNN wants to use it for
-### their website (which contains thousands of new original images every day).
-### How would you expand the service, it’s infrastructure and/or architecture to handle the
-### large scale?
+### Your thumbnail service is getting traction and CNN wants to use it for their website (which contains thousands of new original images every day). How would you expand the service, it’s infrastructure and/or architecture to handle the large scale?
 
 There are two Microservices which have different requirements and need to scale out differently. 
 So I would separate the code I created to:
@@ -53,3 +50,5 @@ So I would separate the code I created to:
 - Microservice 2 - A second layer of containers that accept those image processing requests and do the actual processing. 
 
 We can do some optimization like caching the images to popular dimentions (iphone, android, pc) and avoid doing the actual processing for each and every request. 
+
+If we have some cache we to identify images that are no longer of interest and remove them carefully.
