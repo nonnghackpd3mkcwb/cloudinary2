@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/nfnt/resize"
@@ -127,8 +128,14 @@ func getThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 // http://localhost:80/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=50&height=40
 
 func main() {
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "80"
+	}
+
 	http.HandleFunc("/thumbnail", getThumbnailHandler)
-	if err := http.ListenAndServe(":80", nil); err != nil {
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		panic(err)
 	}
 }
