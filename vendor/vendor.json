@@ -3,6 +3,9 @@
 	"ignore": "test",
 	"package": [
 		{
+			"path": "github.com/nfnt/resize"
+		},
+		{
 			"checksumSHA1": "Qq7Gzany1n6gK6hpZQq9UXFhGGo=",
 			"comment": "v1.0rc1-110-g4cc2de6",
 			"path": "github.com/gin-gonic/gin",
