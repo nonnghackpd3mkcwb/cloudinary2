@@ -124,11 +124,11 @@ func getThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Image processing complete.")
 }
 
-// http://localhost:8080/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=50&height=40
+// http://localhost:80/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=50&height=40
 
 func main() {
 	http.HandleFunc("/thumbnail", getThumbnailHandler)
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":80", nil); err != nil {
 		panic(err)
 	}
 }
