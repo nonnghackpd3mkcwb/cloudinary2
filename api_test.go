@@ -28,8 +28,8 @@ func getHTTPResponse(url string, t *testing.T) (rr *httptest.ResponseRecorder) {
 
 func TestOkCall(t *testing.T) {
 	// Go over all kinds of widths+heights combinations and make sure result is 200
-	for w := 10; w <= 1000; w += 150 {
-		for h := 10; h <= 1000; h += 150 {
+	for w := 10; w <= 1000; w += 250 {
+		for h := 10; h <= 1000; h += 250 {
 
 			url := fmt.Sprintf("/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=%v&height=%v", w, h)
 			// Check a "good flow call"
@@ -46,7 +46,7 @@ func TestOkCall(t *testing.T) {
 func TestErrorUrlNonJpeg(t *testing.T) {
 	// Check fail we send non-jpeg
 	rr := getHTTPResponse("/thumbnail?url=https://image.fnbr.co/outfit/5ab156b3e9847b3170da0324/png.png&width=500&height=900", t)
-	expected := http.StatusInternalServerError
+	expected := http.StatusUnsupportedMediaType
 	// Check the status code is what we expect.
 	if status := rr.Code; status != expected {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -54,10 +54,21 @@ func TestErrorUrlNonJpeg(t *testing.T) {
 	}
 }
 
-func TestErrorUrlBad(t *testing.T) {
+func TestErrorUrlBadFormat(t *testing.T) {
 	// Check Bad Url address
 	rr := getHTTPResponse("/thumbnail?url=bad_value&width=500&height=900", t)
-	expected := http.StatusInternalServerError
+	expected := http.StatusBadRequest
+	// Check the status code is what we expect.
+	if status := rr.Code; status != expected {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, expected)
+	}
+}
+
+func TestErrorUrlDoesntExist(t *testing.T) {
+	// Check Bad Url address
+	rr := getHTTPResponse("/thumbnail?url=https://image.fnbr.co/outfit.jpg&width=500&height=900", t)
+	expected := http.StatusBadRequest
 	// Check the status code is what we expect.
 	if status := rr.Code; status != expected {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -68,7 +79,7 @@ func TestErrorUrlBad(t *testing.T) {
 func TestErrorUrlMissing(t *testing.T) {
 	// Check missing url
 	rr := getHTTPResponse("/thumbnail?url2=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=500&height=900", t)
-	expected := http.StatusInternalServerError
+	expected := http.StatusBadRequest
 	// Check the status code is what we expect.
 	if status := rr.Code; status != expected {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -79,11 +90,12 @@ func TestErrorUrlMissing(t *testing.T) {
 func TestErrorWidthBad(t *testing.T) {
 	// check bad width values
 	badValues := [5]string{"13-", "_14", "56.3", "z", "5T"}
+	expected := http.StatusBadRequest
 	for _, element := range badValues {
 		url := fmt.Sprintf("/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=%v&height=900", element)
 		// element is the element from someSlice for where we are
 		rr := getHTTPResponse(url, t)
-		expected := http.StatusInternalServerError
+
 		// Check the status code is what we expect.
 		if status := rr.Code; status != expected {
 			t.Errorf("handler returned wrong status code: got %v want %v",
@@ -96,7 +108,7 @@ func TestErrorWidthBad(t *testing.T) {
 func TestErrorWidthMissing(t *testing.T) {
 	// check  width missing
 	rr := getHTTPResponse("/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width12=500&height=900", t)
-	expected := http.StatusInternalServerError
+	expected := http.StatusBadRequest
 	// Check the status code is what we expect.
 	if status := rr.Code; status != expected {
 		t.Errorf("handler returned wrong status code: got %v want %v",
@@ -107,11 +119,12 @@ func TestErrorWidthMissing(t *testing.T) {
 func TestErrorHeightBad(t *testing.T) {
 	// check bad height values
 	badValues := [5]string{"13-", "_14", "56.3", "z", "5T"}
+	expected := http.StatusBadRequest
 	for _, element := range badValues {
 		url := fmt.Sprintf("/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=500&height=%v", element)
 		// element is the element from someSlice for where we are
 		rr := getHTTPResponse(url, t)
-		expected := http.StatusInternalServerError
+
 		// Check the status code is what we expect.
 		if status := rr.Code; status != expected {
 			t.Errorf("handler returned wrong status code: got %v want %v",
@@ -124,7 +137,7 @@ func TestErrorHeightBad(t *testing.T) {
 func TestErrorHeightMissing(t *testing.T) {
 	// check height missing
 	rr := getHTTPResponse("/thumbnail?url=http://www.ximagic.com/d_im_lenajpeg/lena_comp.jpg&width=500&height12=900", t)
-	expected := http.StatusInternalServerError
+	expected := http.StatusBadRequest
 	// Check the status code is what we expect.
 	if status := rr.Code; status != expected {
 		t.Errorf("handler returned wrong status code: got %v want %v",

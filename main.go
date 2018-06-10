@@ -15,18 +15,35 @@ import (
 	"github.com/nfnt/resize"
 )
 
-func writeError500(w http.ResponseWriter, msg string) {
+func writeError(w http.ResponseWriter, msg string, httpCode int) {
 	log.Println(msg)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(httpCode)
 	fmt.Fprintf(w, `{error":%q}`, msg)
+}
+
+type CloudinaryPanic struct {
+	error    string
+	httpCode uint
+}
+
+func triggerCloudinaryPanic(error string, httpCode uint) {
+	panic(CloudinaryPanic{
+		error:    error,
+		httpCode: httpCode,
+	})
 }
 
 func getThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 	defer (func() {
 		if r := recover(); r != nil {
 			log.Println("ERROR", r)
-			writeError500(w, fmt.Sprintf("%v", r))
+			cdnryRec, ok := r.(CloudinaryPanic)
+			if ok == true {
+				writeError(w, fmt.Sprintf("%v", cdnryRec.error), int(cdnryRec.httpCode))
+			} else {
+				writeError(w, fmt.Sprintf("%v", r), http.StatusInternalServerError)
+			}
 		}
 	})()
 
@@ -37,19 +54,19 @@ func getThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 	height64, heightOk := strconv.ParseInt(queryValues.Get("height"), 10, 32)
 
 	if len(url) == 0 {
-		panic("missing/bad url parameter")
+		triggerCloudinaryPanic("missing/bad url parameter", http.StatusBadRequest)
 	}
 
 	if widthOk != nil {
-		panic("missing/bad width parameter")
+		triggerCloudinaryPanic("missing/bad width parameter", http.StatusBadRequest)
 	}
 
 	if heightOk != nil {
-		panic("missing/bad height parameter")
+		triggerCloudinaryPanic("missing/bad height parameter", http.StatusBadRequest)
 	}
 
 	if width64 <= 0 || height64 <= 0 {
-		panic("width and height can't be zero or negative")
+		triggerCloudinaryPanic("width and height can't be zero or negative", http.StatusBadRequest)
 	}
 
 	width, height := int(width64), int(height64)
@@ -57,8 +74,15 @@ func getThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("parameters are (url, width,height) => ", url, width, height)
 
 	data, err := downloadImageData(url)
+
+	if err == nil && http.DetectContentType(data) != "image/jpeg" {
+		triggerCloudinaryPanic("image type unsupposrted", http.StatusUnsupportedMediaType)
+	}
+
 	if err != nil {
-		panic(fmt.Sprintf("unable to fetch image from url: %v", err))
+		triggerCloudinaryPanic(
+			fmt.Sprintf("unable to fetch image from url: %v", err),
+			http.StatusBadRequest)
 	}
 
 	//save_data_to_disk(data, "/data/00)original.jpg")
@@ -66,13 +90,13 @@ func getThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 	// Decoding data into an image
 	_image, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
-		panic("unable to parse image")
+		triggerCloudinaryPanic("unable to parse image", http.StatusUnsupportedMediaType)
 	}
 
 	// Decode image config
 	config, err := jpeg.DecodeConfig(bytes.NewReader(data))
 	if err != nil {
-		panic("unable to parse image config")
+		triggerCloudinaryPanic("unable to parse image configuration", http.StatusUnsupportedMediaType)
 	}
 
 	newImage := _image
@@ -82,11 +106,23 @@ func getThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 	if width < config.Width ||
 		height < config.Height {
 
+		ratio := float64(config.Width) / float64(config.Height)
+
 		trimmedWidth, trimmedHeight = int(math.Min(float64(width), float64(config.Width))),
 			int(math.Min(float64(height), float64(config.Height)))
 
+		// apply the ratio restoration for width (maybe override in the height restoration)
+		if trimmedWidth < config.Width {
+			trimmedHeight = int(math.Min(float64(trimmedHeight), float64(trimmedWidth)/ratio))
+		}
+
+		// apply the ratio restoration for height
+		if trimmedHeight < config.Height {
+			trimmedWidth = int(math.Min(float64(trimmedWidth), float64(trimmedHeight)*ratio))
+		}
+
 		if trimmedWidth == 0 || trimmedHeight == 0 {
-			panic("invalid image dimentions")
+			triggerCloudinaryPanic("invalid image dimentions", http.StatusInternalServerError)
 		}
 
 		log.Println("image is resized to", trimmedWidth, trimmedHeight)
@@ -112,6 +148,7 @@ func getThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		panic("unable to encode padded image after processing")
+		triggerCloudinaryPanic("invalid image dimentions", http.StatusInternalServerError)
 	}
 
 	finalBytes := buf.Bytes()
@@ -120,7 +157,7 @@ func getThumbnailHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.Header().Set("Content-Length", strconv.Itoa(len(finalBytes)))
 	if _, err := w.Write(finalBytes); err != nil {
-		panic("unable to reconstruct image")
+		triggerCloudinaryPanic("unable to reconstruct image", http.StatusInternalServerError)
 	}
 	log.Println("Image processing complete.")
 }
@@ -131,7 +168,7 @@ func main() {
 	port := os.Getenv("PORT")
 
 	if port == "" {
-		port = "80"
+		port = "8080" // TBD
 	}
 
 	http.HandleFunc("/thumbnail", getThumbnailHandler)

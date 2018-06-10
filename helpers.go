@@ -38,10 +38,6 @@ func downloadImageData(url string) ([]byte, error) {
 	defer response.Body.Close()
 	rawData, e := ioutil.ReadAll(response.Body)
 
-	if http.DetectContentType(rawData) != "image/jpeg" {
-		return nil, errors.New("bad image format")
-	}
-
 	if e != nil {
 		return nil, e
 	}
